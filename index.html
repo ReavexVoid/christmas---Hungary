@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karácsonyi Visszaszámláló</title>
+    <style>
+        body {
+            background: linear-gradient(#b30000, #4d0000);
+            color: white;
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            padding-top: 80px;
+        }
+        h1 {
+            font-size: 48px;
+            text-shadow: 2px 2px 5px black;
+        }
+        #countdown {
+            font-size: 32px;
+            margin-top: 30px;
+            font-weight: bold;
+        }
+        .box {
+            background: rgba(255, 255, 255, 0.1);
+            display: inline-block;
+            padding: 20px 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎄 Karácsonyi Visszaszámláló 🎅</h1>
+    <div id="countdown" class="box">Betöltés...</div>
+
+<script>
+    function getNextChristmas() {
+        const now = new Date();
+        let christmas = new Date(now.getFullYear(), 11, 25, 0, 0, 0); // Dec 25
+
+        // Ha idén már elmúlt, akkor jövő év
+        if (now > christmas) {
+            christmas.setFullYear(christmas.getFullYear() + 1);
+        }
+        return christmas;
+    }
+
+    function updateCountdown() {
+        const now = new Date();
+        const target = getNextChristmas();
+
+        const diff = target - now;
+
+        const seconds = Math.floor(diff / 1000) % 60;
+        const minutes = Math.floor(diff / (1000 * 60)) % 60;
+        const hours = Math.floor(diff / (1000 * 60 * 60)) % 24;
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+        document.getElementById("countdown").textContent = 
+            `${days} nap ${hours} óra ${minutes} perc ${seconds} másodperc van karácsonyig!`;
+    }
+
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+</script>
+
+</body>
+</html>
