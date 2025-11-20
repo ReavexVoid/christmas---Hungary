@@ -32,24 +32,38 @@
 </head>
 <body>
 
-    <h1>🎄 Karácsonyi Visszaszámláló 🎅</h1>
-    <div id="countdown" class="box">Betöltés...</div>
+    <h1>🎄 Ünnepi Visszaszámláló 🎉</h1>
+
+    <label for="holidaySelect" style="font-size:20px; font-weight:bold;">Válassz ünnepet:</label><br><br>
+    <select id="holidaySelect" class="box" style="font-size:18px;">
+        <option value="12-25">Karácsony (Dec 25)</option>
+        <option value="01-01">Újév (Jan 1)</option>
+        <option value="02-14">Valentin nap (Feb 14)</option>
+        <option value="03-15">Nemzeti Ünnep (Mar 15)</option>
+        <option value="04-01">Húsvét (változó) – manuális!</option>
+        <option value="10-31">Halloween (Oct 31)</option>
+    </select>
+
+    <div id="countdown" class="box" style="margin-top:30px;">Betöltés...</div>
 
 <script>
-    function getNextChristmas() {
+    function getNextHoliday() {
         const now = new Date();
-        let christmas = new Date(now.getFullYear(), 11, 25, 0, 0, 0); // Dec 25
+        const select = document.getElementById("holidaySelect").value.split("-");
+        const month = parseInt(select[0]) - 1;
+        const day = parseInt(select[1]);
 
-        // Ha idén már elmúlt, akkor jövő év
-        if (now > christmas) {
-            christmas.setFullYear(christmas.getFullYear() + 1);
+        let holiday = new Date(now.getFullYear(), month, day, 0, 0, 0);
+
+        if (now > holiday) {
+            holiday.setFullYear(holiday.getFullYear() + 1);
         }
-        return christmas;
+        return holiday;
     }
 
     function updateCountdown() {
         const now = new Date();
-        const target = getNextChristmas();
+        const target = getNextHoliday();
 
         const diff = target - now;
 
@@ -59,8 +73,10 @@
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
         document.getElementById("countdown").textContent = 
-            `${days} nap ${hours} óra ${minutes} perc ${seconds} másodperc van karácsonyig!`;
+            `${days} nap ${hours} óra ${minutes} perc ${seconds} másodperc van hátra az ünnepig!`;
     }
+
+    document.getElementById("holidaySelect").addEventListener("change", updateCountdown);
 
     setInterval(updateCountdown, 1000);
     updateCountdown();
