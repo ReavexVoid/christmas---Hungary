@@ -3,228 +3,222 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ULTIMATE Countdown</title>
+<title>Ultimate Dark Christmas Countdown</title>
 
 <style>
-:root {
-    --glow: 0 0 30px currentColor;
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap');
+
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: radial-gradient(circle at center, #050a05, #000);
+  font-family: 'Orbitron', monospace;
 }
 
-body {
-    margin: 0;
-    height: 100vh;
-    background: radial-gradient(circle at top, #111, #000);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: 'Segoe UI', Arial, sans-serif;
-    overflow: hidden;
-    user-select: none;
+canvas#bg {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+#wrap {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1200px;
 }
 
 #countdown {
-    display: flex;
-    gap: 18px;
-    font-size: clamp(40px, 8vw, 80px);
-    font-weight: 900;
-    letter-spacing: 2px;
-    filter: drop-shadow(var(--glow));
-    transition: color 0.3s linear;
+  display: flex;
+  gap: 20px;
+  font-size: clamp(40px, 8vw, 100px);
+  font-weight: 900;
+  color: #00ff88;
+  text-shadow: 0 0 15px currentColor, 0 0 40px currentColor;
+  transform-style: preserve-3d;
+  transition: color 0.3s ease;
 }
 
 .block {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .unit {
-    display: flex;
-    gap: 6px;
+  display: flex;
+  gap: 6px;
 }
 
 .label {
-    font-size: 13px;
-    opacity: 0.75;
-    margin-top: 6px;
+  font-size: 14px;
+  margin-top: 8px;
+  opacity: 0.7;
+  letter-spacing: 1.5px;
 }
 
 .digit {
-    position: relative;
-    width: 55px;
-    height: 90px;
-    overflow: hidden;
+  position: relative;
+  width: 60px;
+  height: 100px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.3);
+  box-shadow: 0 0 15px rgba(0,255,100,0.5), inset 0 0 10px rgba(0,255,100,0.3);
 }
 
 .digit span {
-    position: absolute;
-    width: 100%;
-    text-align: center;
-    line-height: 90px;
-    transition: transform 0.45s cubic-bezier(.4,0,.2,1), opacity 0.45s;
+  position: absolute;
+  width: 100%;
+  line-height: 100px;
+  text-align: center;
+  transition: transform 0.4s cubic-bezier(.4,0,.2,1), opacity 0.4s;
 }
 
 .old { transform: translateY(0); opacity: 1; }
-.new { transform: translateY(100%); opacity: 0; }
+.new { transform: translateY(120%); opacity: 0; }
 
-.animate .old { transform: translateY(-100%); opacity: 0; }
-.animate .new { transform: translateY(0); opacity: 1; }
-
-.pulse { animation: pulse 1s infinite; }
-@keyframes pulse {
-    0%,100%{transform:scale(1)}
-    50%{transform:scale(1.06)}
-}
-
-.shake { animation: shake .4s infinite; }
-@keyframes shake {
-    0%{transform:translate(0)}
-    25%{transform:translate(4px,-4px)}
-    50%{transform:translate(-4px,4px)}
-    75%{transform:translate(4px,4px)}
-}
+.animate .old { transform: translateY(-120%) rotateX(45deg); opacity: 0; }
+.animate .new { transform: translateY(0) rotateX(0deg); opacity: 1; }
 
 #flash {
-    position: fixed;
-    inset: 0;
-    background: white;
-    opacity: 0;
-    pointer-events: none;
-}
-
-.confetti {
-    position: fixed;
-    width: 6px;
-    height: 6px;
-    animation: fall linear forwards;
-}
-@keyframes fall {
-    to { transform: translateY(120vh) rotate(720deg); opacity: 0; }
+  position: fixed;
+  inset: 0;
+  background: white;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10;
 }
 </style>
 </head>
 
 <body>
 
-<div id="countdown"></div>
+<canvas id="bg"></canvas>
+<div id="wrap">
+  <div id="countdown"></div>
+</div>
 <div id="flash"></div>
 
 <script>
-/* FULLSCREEN mobilon */
-document.addEventListener("click", () => {
-    if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen();
-    }
-}, { once:true });
+// ===== FULLSCREEN CLICK =====
+document.addEventListener("click",()=>{document.documentElement.requestFullscreen?.()},{once:true});
 
-const targetDate = new Date(new Date().getFullYear(), 11, 23, 22, 0, 0);
-const startDate = new Date();
-const totalTime = targetDate - startDate;
+// ===== BACKGROUND SNOW + LIGHT =====
+const canvas=document.getElementById("bg");
+const ctx=canvas.getContext("2d");
+let w,h;
+function resize(){w=canvas.width=innerWidth; h=canvas.height=innerHeight;}
+window.addEventListener("resize",resize); resize();
 
-const countdown = document.getElementById("countdown");
-const flash = document.getElementById("flash");
-let finished = false;
+const snowflakes=Array.from({length:250},()=>({
+  x: Math.random()*w,
+  y: Math.random()*h,
+  r: Math.random()*2+0.5,
+  s: Math.random()*1.5+0.3,
+  d: Math.random()*w
+}));
 
-/* RGB CYBERPUNK MODE */
-let hue = 0;
-setInterval(() => {
-    hue = (hue + 1) % 360;
-    countdown.style.textShadow = `0 0 25px hsl(${hue},100%,60%)`;
-}, 30);
+function drawSnow(){
+  ctx.clearRect(0,0,w,h);
+  snowflakes.forEach(f=>{
+    f.y += f.s;
+    if(f.y>h) {f.y=0; f.x=Math.random()*w;}
+    ctx.fillStyle="rgba(255,255,255,0.8)";
+    ctx.beginPath();
+    ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
+    ctx.fill();
+  });
+  requestAnimationFrame(drawSnow);
+}
+drawSnow();
+
+// ===== COUNTDOWN =====
+const target=new Date(new Date().getFullYear(),11,23,22,0,0);
+const totalTime=target-new Date();
+const cd=document.getElementById("countdown");
+const flash=document.getElementById("flash");
 
 function digit(n){
-    const d=document.createElement("div");
-    d.className="digit";
-    d.innerHTML=`<span class="old">${n}</span><span class="new">${n}</span>`;
-    return d;
+  const d=document.createElement("div");
+  d.className="digit";
+  d.innerHTML=`<span class="old">${n}</span><span class="new">${n}</span>`;
+  return d;
 }
 
-function block(label, count){
-    const b=document.createElement("div");
-    b.className="block";
-    const u=document.createElement("div");
-    u.className="unit";
-    for(let i=0;i<count;i++) u.appendChild(digit("0"));
-    const l=document.createElement("div");
-    l.className="label";
-    l.innerText=label;
-    b.append(u,l);
-    countdown.appendChild(b);
-    return u;
+function block(label,count){
+  const b=document.createElement("div");
+  b.className="block";
+  const u=document.createElement("div");
+  u.className="unit";
+  for(let i=0;i<count;i++) u.appendChild(digit("0"));
+  const l=document.createElement("div");
+  l.className="label";
+  l.textContent=label;
+  b.append(u,l);
+  cd.appendChild(b);
+  return u;
 }
 
 const units={
-    d:block("NAP",3),
-    h:block("ÓRA",2),
-    m:block("PERC",2),
-    s:block("MP",2),
-    ms:block("MS",3)
+  d:block("NAP",3),
+  h:block("ÓRA",2),
+  m:block("PERC",2),
+  s:block("MP",2)
 };
 
 function updateDigit(d,v){
-    const o=d.children[0], n=d.children[1];
-    if(o.innerText===v) return;
-    n.innerText=v;
-    d.classList.add("animate");
-    setTimeout(()=>{
-        o.innerText=v;
-        d.classList.remove("animate");
-    },450);
+  const o=d.children[0], n=d.children[1];
+  if(o.textContent===v) return;
+  n.textContent=v;
+  d.classList.add("animate");
+  setTimeout(()=>{o.textContent=v; d.classList.remove("animate");},400);
 }
 
-function confetti(){
-    for(let i=0;i<150;i++){
-        const c=document.createElement("div");
-        c.className="confetti";
-        c.style.left=Math.random()*100+"vw";
-        c.style.background=`hsl(${Math.random()*360},100%,50%)`;
-        c.style.animationDuration=2+Math.random()*2+"s";
-        document.body.appendChild(c);
-        setTimeout(()=>c.remove(),4000);
-    }
-}
-
-function endFX(){
-    if(finished) return;
-    finished=true;
-    countdown.classList.add("pulse","shake");
-    flash.style.opacity=1;
-    setTimeout(()=>flash.style.opacity=0,300);
-    confetti();
-}
+let finished=false;
 
 function update(){
-    const now=new Date();
-    let diff=targetDate-now;
-    if(diff<0) diff=0;
+  const now=new Date();
+  let diff=target-now;
+  if(diff<0) diff=0;
 
-    const d=Math.floor(diff/86400000);
-    const h=Math.floor(diff/3600000)%24;
-    const m=Math.floor(diff/60000)%60;
-    const s=Math.floor(diff/1000)%60;
-    const ms=Math.floor(diff%1000);
+  const d=Math.floor(diff/86400000);
+  const h=Math.floor(diff/3600000)%24;
+  const m=Math.floor(diff/60000)%60;
+  const s=Math.floor(diff/1000)%60;
 
-    const map={
-        d:d.toString().padStart(3,"0"),
-        h:h.toString().padStart(2,"0"),
-        m:m.toString().padStart(2,"0"),
-        s:s.toString().padStart(2,"0"),
-        ms:ms.toString().padStart(3,"0")
-    };
+  const map={
+    d:d.toString().padStart(3,"0"),
+    h:h.toString().padStart(2,"0"),
+    m:m.toString().padStart(2,"0"),
+    s:s.toString().padStart(2,"0")
+  };
 
-    for(const k in map){
-        [...units[k].children].forEach((dig,i)=>{
-            updateDigit(dig,map[k][i]);
-        });
-    }
+  for(const k in map){
+    [...units[k].children].forEach((dig,i)=>updateDigit(dig,map[k][i]));
+  }
 
-    /* Squid Game színlogika */
-    const ratio=diff/totalTime;
-    const r=Math.floor(255*(1-ratio));
-    const g=Math.floor(255*ratio);
-    countdown.style.color=`rgb(${r},${g},60)`;
+  // Christmas colors: green -> red
+  const ratio=diff/totalTime;
+  const r=Math.floor(255*(1-ratio));
+  const g=Math.floor(200*ratio+55);
+  cd.style.color=`rgb(${r},${g},120)`;
 
-    if(diff===0) endFX();
+  // Final flash + confetti vibe
+  if(diff===0 && !finished){
+    finished=true;
+    flash.style.opacity=1;
+    setTimeout(()=>flash.style.opacity=0,500);
+  }
 }
 
 setInterval(update,16);
