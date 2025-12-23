@@ -1,85 +1,234 @@
 <!DOCTYPE html>
 <html lang="hu">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Karácsonyi Visszaszámláló</title>
-    <style>
-        body {
-            background: linear-gradient(#b30000, #4d0000);
-            color: white;
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-            padding-top: 80px;
-        }
-        h1 {
-            font-size: 48px;
-            text-shadow: 2px 2px 5px black;
-        }
-        #countdown {
-            font-size: 32px;
-            margin-top: 30px;
-            font-weight: bold;
-        }
-        .box {
-            background: rgba(255, 255, 255, 0.1);
-            display: inline-block;
-            padding: 20px 40px;
-            border-radius: 20px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.4);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ULTIMATE Countdown</title>
+
+<style>
+:root {
+    --glow: 0 0 30px currentColor;
+}
+
+body {
+    margin: 0;
+    height: 100vh;
+    background: radial-gradient(circle at top, #111, #000);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    overflow: hidden;
+    user-select: none;
+}
+
+#countdown {
+    display: flex;
+    gap: 18px;
+    font-size: clamp(40px, 8vw, 80px);
+    font-weight: 900;
+    letter-spacing: 2px;
+    filter: drop-shadow(var(--glow));
+    transition: color 0.3s linear;
+}
+
+.block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.unit {
+    display: flex;
+    gap: 6px;
+}
+
+.label {
+    font-size: 13px;
+    opacity: 0.75;
+    margin-top: 6px;
+}
+
+.digit {
+    position: relative;
+    width: 55px;
+    height: 90px;
+    overflow: hidden;
+}
+
+.digit span {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    line-height: 90px;
+    transition: transform 0.45s cubic-bezier(.4,0,.2,1), opacity 0.45s;
+}
+
+.old { transform: translateY(0); opacity: 1; }
+.new { transform: translateY(100%); opacity: 0; }
+
+.animate .old { transform: translateY(-100%); opacity: 0; }
+.animate .new { transform: translateY(0); opacity: 1; }
+
+.pulse { animation: pulse 1s infinite; }
+@keyframes pulse {
+    0%,100%{transform:scale(1)}
+    50%{transform:scale(1.06)}
+}
+
+.shake { animation: shake .4s infinite; }
+@keyframes shake {
+    0%{transform:translate(0)}
+    25%{transform:translate(4px,-4px)}
+    50%{transform:translate(-4px,4px)}
+    75%{transform:translate(4px,4px)}
+}
+
+#flash {
+    position: fixed;
+    inset: 0;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.confetti {
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    animation: fall linear forwards;
+}
+@keyframes fall {
+    to { transform: translateY(120vh) rotate(720deg); opacity: 0; }
+}
+</style>
 </head>
+
 <body>
 
-    <h1>🎄 Ünnepi Visszaszámláló 🎉</h1>
-
-    <label for="holidaySelect" style="font-size:20px; font-weight:bold;">Válassz ünnepet:</label><br><br>
-    <select id="holidaySelect" class="box" style="font-size:18px;">
-        <option value="12-25">Karácsony (Dec 25)</option>
-        <option value="01-01">Újév (Jan 1)</option>
-        <option value="02-14">Valentin nap (Feb 14)</option>
-        <option value="03-15">Nemzeti Ünnep (Mar 15)</option>
-        <option value="04-01">Húsvét (változó) – manuális!</option>
-        <option value="10-31">Halloween (Oct 31)</option>
-    </select>
-
-    <div id="countdown" class="box" style="margin-top:30px;">Betöltés...</div>
+<div id="countdown"></div>
+<div id="flash"></div>
 
 <script>
-    function getNextHoliday() {
-        const now = new Date();
-        const select = document.getElementById("holidaySelect").value.split("-");
-        const month = parseInt(select[0]) - 1;
-        const day = parseInt(select[1]);
+/* FULLSCREEN mobilon */
+document.addEventListener("click", () => {
+    if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+    }
+}, { once:true });
 
-        let holiday = new Date(now.getFullYear(), month, day, 0, 0, 0);
+const targetDate = new Date(new Date().getFullYear(), 11, 23, 22, 0, 0);
+const startDate = new Date();
+const totalTime = targetDate - startDate;
 
-        if (now > holiday) {
-            holiday.setFullYear(holiday.getFullYear() + 1);
-        }
-        return holiday;
+const countdown = document.getElementById("countdown");
+const flash = document.getElementById("flash");
+let finished = false;
+
+/* RGB CYBERPUNK MODE */
+let hue = 0;
+setInterval(() => {
+    hue = (hue + 1) % 360;
+    countdown.style.textShadow = `0 0 25px hsl(${hue},100%,60%)`;
+}, 30);
+
+function digit(n){
+    const d=document.createElement("div");
+    d.className="digit";
+    d.innerHTML=`<span class="old">${n}</span><span class="new">${n}</span>`;
+    return d;
+}
+
+function block(label, count){
+    const b=document.createElement("div");
+    b.className="block";
+    const u=document.createElement("div");
+    u.className="unit";
+    for(let i=0;i<count;i++) u.appendChild(digit("0"));
+    const l=document.createElement("div");
+    l.className="label";
+    l.innerText=label;
+    b.append(u,l);
+    countdown.appendChild(b);
+    return u;
+}
+
+const units={
+    d:block("NAP",3),
+    h:block("ÓRA",2),
+    m:block("PERC",2),
+    s:block("MP",2),
+    ms:block("MS",3)
+};
+
+function updateDigit(d,v){
+    const o=d.children[0], n=d.children[1];
+    if(o.innerText===v) return;
+    n.innerText=v;
+    d.classList.add("animate");
+    setTimeout(()=>{
+        o.innerText=v;
+        d.classList.remove("animate");
+    },450);
+}
+
+function confetti(){
+    for(let i=0;i<150;i++){
+        const c=document.createElement("div");
+        c.className="confetti";
+        c.style.left=Math.random()*100+"vw";
+        c.style.background=`hsl(${Math.random()*360},100%,50%)`;
+        c.style.animationDuration=2+Math.random()*2+"s";
+        document.body.appendChild(c);
+        setTimeout(()=>c.remove(),4000);
+    }
+}
+
+function endFX(){
+    if(finished) return;
+    finished=true;
+    countdown.classList.add("pulse","shake");
+    flash.style.opacity=1;
+    setTimeout(()=>flash.style.opacity=0,300);
+    confetti();
+}
+
+function update(){
+    const now=new Date();
+    let diff=targetDate-now;
+    if(diff<0) diff=0;
+
+    const d=Math.floor(diff/86400000);
+    const h=Math.floor(diff/3600000)%24;
+    const m=Math.floor(diff/60000)%60;
+    const s=Math.floor(diff/1000)%60;
+    const ms=Math.floor(diff%1000);
+
+    const map={
+        d:d.toString().padStart(3,"0"),
+        h:h.toString().padStart(2,"0"),
+        m:m.toString().padStart(2,"0"),
+        s:s.toString().padStart(2,"0"),
+        ms:ms.toString().padStart(3,"0")
+    };
+
+    for(const k in map){
+        [...units[k].children].forEach((dig,i)=>{
+            updateDigit(dig,map[k][i]);
+        });
     }
 
-    function updateCountdown() {
-        const now = new Date();
-        const target = getNextHoliday();
+    /* Squid Game színlogika */
+    const ratio=diff/totalTime;
+    const r=Math.floor(255*(1-ratio));
+    const g=Math.floor(255*ratio);
+    countdown.style.color=`rgb(${r},${g},60)`;
 
-        const diff = target - now;
+    if(diff===0) endFX();
+}
 
-        const seconds = Math.floor(diff / 1000) % 60;
-        const minutes = Math.floor(diff / (1000 * 60)) % 60;
-        const hours = Math.floor(diff / (1000 * 60 * 60)) % 24;
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-        document.getElementById("countdown").textContent = 
-            `${days} nap ${hours} óra ${minutes} perc ${seconds} másodperc van hátra az ünnepig!`;
-    }
-
-    document.getElementById("holidaySelect").addEventListener("change", updateCountdown);
-
-    setInterval(updateCountdown, 1000);
-    updateCountdown();
+setInterval(update,16);
+update();
 </script>
 
 </body>
